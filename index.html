@@ -100,15 +100,17 @@ var EMO = {
   anger:    {c:"#0A4174", dark:true}
 };
 var LEX = {
-  joy:"happy glad joy joyful excited great wonderful fun cheerful delighted proud grateful good amazing smile laugh enjoy pleased",
+  joy:"happiness happy glad joy joyful excited great wonderful fun cheerful delighted proud grateful good amazing smile laugh enjoy pleased",
   love:"love loved loving adore caring affection sweet dear fond warm kind romantic tender cherish hug",
-  surprise:"surprised shocked amazed astonished unexpected suddenly wow stunned strange weird curious sudden unbelievable",
+  surprise:"surprise surprised shocked amazed astonished unexpected suddenly wow stunned strange weird curious sudden unbelievable",
   fear:"afraid scared fear terrified anxious worried nervous panic dread frightened unsafe threatened shaking nightmare",
-  sadness:"sad unhappy lonely cry crying hopeless depressed miserable hurt grief lost empty tired down heartbroken",
-  anger:"angry mad furious hate annoyed irritated rage grouchy bitter outraged jealous frustrated resentful"
+  sadness:"sadness sorrow sad unhappy lonely cry crying hopeless depressed miserable hurt grief lost empty tired down heartbroken",
+  anger:"anger angry mad furious hate annoyed irritated rage grouchy bitter outraged jealous frustrated resentful"
 };
 var W = {};
 Object.keys(LEX).forEach(function(k){ LEX[k].split(" ").forEach(function(w){ W[w] = k; }); });
+var W4 = {};
+Object.keys(W).forEach(function(w){ if (w.length > 3) W4[w.slice(0,4)] = W[w]; });
 
 var card = document.getElementById("card"),
     fill = document.getElementById("fill"),
@@ -121,7 +123,12 @@ var card = document.getElementById("card"),
 function demo(text){
   var s = {}, sum = 0, k;
   Object.keys(EMO).forEach(function(e){ s[e] = 0.25; });
-  (text.toLowerCase().match(/[a-z']+/g) || []).forEach(function(w){ if (W[w]) s[W[w]] += 2; });
+  var hits = 0;
+  (text.toLowerCase().match(/[a-z']+/g) || []).forEach(function(w){
+    var k = W[w] || (w.length > 4 ? W4[w.slice(0,4)] : null);
+    if (k){ s[k] += 2; hits++; }
+  });
+  if (!hits) return null;
   for (k in s){ s[k] = Math.pow(s[k], 1.6); sum += s[k]; }
   for (k in s) s[k] /= sum;
   return s;
@@ -136,6 +143,15 @@ function predict(text){
 }
 
 function show(probs){
+  if (!probs){
+    card.style.background = "#BDD8E9";
+    card.className = "card light";
+    label.textContent = "Not sure";
+    pct.textContent = "";
+    fill.style.width = "0";
+    verdict.textContent = "No emotion words found";
+    return;
+  }
   var top = Object.keys(probs).sort(function(a,b){ return probs[b] - probs[a]; })[0];
   var e = EMO[top] || EMO.joy;
   card.style.background = e.c;
